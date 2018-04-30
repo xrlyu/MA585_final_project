@@ -11,7 +11,7 @@ data2 <- data %>%
   dplyr::select(gross, date)
 
 data2$my <- floor_date(data2$date, "month")
-series <- ddply(data2, "my", summarise, box_office = mean(gross))
+series <- ddply(data2, "my", summarise, box_office = sum(gross))
 series$year <- year(series$my)
 
 inflation <- read.csv("inflation rate.csv")
@@ -41,7 +41,7 @@ new <- data2 %>%
   dplyr::select(gross, date)
 
 new$my <- floor_date(new$date, "month")
-series <- ddply(new, "my", summarise, box_office = mean(gross))
+series <- ddply(new, "my", summarise, box_office = sum(gross))
 series$year <- year(series$my)
 
 inflation <- read.csv("inflation rate2.csv")
@@ -54,6 +54,10 @@ full$inflation <- as.numeric(full$inflation)
 full$gross <- full$box_office * full$inflation
 
 box_office <- full %>% dplyr::select(my, gross)
+
+options(digits = 5)
+
+box_office$gross <- box_office$gross/10^6
 
 # make box_office as time series
 box_office <- ts(box_office$gross, start = c(2008,1), end = c(2018,3), frequency = 12)

@@ -1,0 +1,131 @@
+---
+title: "MA585 PAPER"
+author: "Xiru Lyu"
+date: "`r format(Sys.time(), '%B %e, %Y')`"
+output:
+  pdf_document:
+    highlight: haddock
+    number_sections: yes
+header: \usepackage{float}
+geometry: margin=0.8in
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.pos = "h")
+
+source("Analysis.R")
+```
+
+The paper talks about box office data.
+
+\newpage
+
+
+# Introduction
+
+
+# Background
+
+```{r fig.cap="Box Office Plot", fig.width=6, fig.height=2.5, fig.align="center"}
+ggplot(train_p, aes(Time, Box)) + geom_line() +
+  scale_x_date(date_labels = "%b-%Y", date_breaks = "3 months") + 
+  xlab("") + ylab("Gross Box Office") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
+        plot.title = element_text(size = 14, hjust = 0.5)) + 
+  ggtitle("Box Office Data")
+```
+
+# Modeling & Diagnostics
+
+## Descriptive Analysis
+
+```{r fig.width=8, fig.height=4, fig.cap="Data Decomposition"}
+plot(z)
+```
+
+## Transformation to Stationary Process
+
+```{r fig.width=6, fig.height = 3, fig.cap="Differenced Data", fig.align='center'}
+plot(diff, main = "Differenced Box Office Data", ylab = "diff(1,12)")
+```
+
+## ARIMA Model
+
+```{r fig.cap="ACF and PACF Plots for Training Data", fig.height=3.5}
+par(mfrow=c(1,2))
+acf(diff, lag.max = 48)
+pacf(diff, lag.max = 48)
+```
+
+```{r fig.align='center', fig.cap="ARIMA subset selection"}
+plot(fit_armasub)
+```
+
+**Model**     | **Full Model**                                | **AICc**
+--------------| ----------------------------------------------|------------------
+ARIMA(1,2,0)  | $X_{t}+0.396X_{t-1}=e_{t}$                    |`r fit_arima_1$aicc`
+ARIMA(0,2,1)  | $X_{t}=e_{t}-0.999e_{t-1}$                    |`r fit_arima_2$aicc`
+ARIMA(1,2,1)  | $X_{t}-0.011X_{t-1}=e_{t}-0.999e_{t-1}$       |`r fit_arima_3$aicc`
+ARIMA(0,2,12) | $X_{t}=e_{t}+0.367e_{t-12}$                   |`r fit_arima_4$aicc`
+
+Table: Comparision of Fitted ARIMA models
+
+### Diagnostics
+
+```{r fig.cap="Residual Analysis for ARIMA(3,2,12)"}
+tsdiag(fit_arima_2)
+```
+
+```{r fig.cap="Normal Q-Q Plot for Fitted ARIMA Model", fig.height=4, fig.align='center'}
+qqnorm(residuals(fit_arima_2), main = "Normal Q-Q Plot \nfor ARIMA(0,2,1)")
+qqline(residuals(fit_arima_2))
+```
+
+## SARIMA model
+
+**Model**                          |**AICc**
+-----------------------------------|--------
+SARIMA$(0,1,1)\times(0,1,1)_{12}$  |1032.6
+SARIMA$(1,1,1)\times(0,1,1)_{12}$  |1034.8
+SARIMA$(1,1,0)\times(0,1,1)_{12}$  |1054.3
+
+Table: Comparison of Fitted SARIMA Models
+
+### Diagnostics
+
+```{r fig.cap="Residual Analysis for SARIMA(0,1,1)(0,1,1)[12]", fig.height=4}
+tsdiag(fit_sarima_1)
+```
+
+```{r fig.cap="Residual Analysis for SARIMA(1,1,1)(0,1,1)[12]", fig.height=4}
+tsdiag(fit_sarima_2)
+```
+
+```{r fig.cap="Comparison of Normal Q-Q Plots for Two Fitted SARIMA Models", fig.height=4}
+par(mfrow=c(1,2))
+qqnorm(residuals(fit_sarima_1), main = "Normal Q-Q Plot \nfor SARIMA(0,1,1)(0,1,1)[12]")
+qqline(residuals(fit_sarima_1))
+
+qqnorm(residuals(fit_sarima_2), main = "Normal Q-Q Plot \nfor SARIMA(1,1,1)(0,1,1)[12]")
+qqline(residuals(fit_sarima_2))
+```
+
+# Forecast
+
+**Criteria** | **ARIMA(0,2,1)**   | **SARIMA_1**         |**SARIMA_2**          | **Holt-Winters**
+---------|----------------|------------------|------------------|---------
+  RMSE   | `r ARIMArmse`  | `r SARIMArmse_1` | `r SARIMArmse_2` | `r HWrmse`
+  MAPE   | `r ARIMAmapez` | `r SARIMAmapez_1`| `r SARIMAmapez_2`| `r HWmapez`
+  MAE    | `r ARIMAmae`   | `r SARIMAmae_1`  | `r SARIMAmae_2`  | `r HWmae`
+  
+Table: Comparision of Forecast Accuracy
+
+
+SARIMA_1: SARIMA$(0,1,1)\times(0,1,1)_{12}$
+
+SARIMA_2: SARIMA$(1,1,1)\times(0,1,1)_{12}$
+
+# Discussion
+
+# Conclusion
