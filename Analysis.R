@@ -95,3 +95,14 @@ HWerr <- test - HWfcast$mean
 HWmae <- mean(abs(HWerr))
 HWrmse <- sqrt(mean(HWerr^2))
 HWmapez <- mean(abs((HWerr*100)/test))
+
+### final model
+fit <- Arima(box_office, model = fit_sarima_2)
+forecast(fit, h = 9)
+
+plot(forecast(fit_sarima_2, h=27))
+lines(test, col = 'red')
+SARIMAerr_2
+
+fit_2 <- Arima(box_office, model = fit_sarima_2)
+forecast(fit_2, h = 9)
